@@ -1,0 +1,136 @@
+---
+title: "第三周作业"
+author: "何玮祎"
+date: "2023-03-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,message=F,warning=F)
+```
+
+```{r}
+library(tidyverse)
+library(patchwork)
+```
+
+##图1a
+
+###读取csv和RDS数据,并合并数据
+```{r}
+a <- read_csv("overall_stats_amazon_basin_degraded_for.csv")
+b <- read_csv("overall_stats_borneo_degraded_for.csv")
+c <- read_csv("overall_stats_congo_basin_degraded_for.csv")
+readRDS("regrowthModel_amazon_basin_deg.rds")
+readRDS("regrowthModel_borneo_deg.rds")
+readRDS("regrowthModel_congo_basin_deg.rds")
+a_1 <-  a |>  
+  mutate(site = "amazon")
+b_1 <-  b |> 
+  mutate(site = "borneo")
+c_1 <-  c |>  
+  mutate(site = "congo")
+m <- rbind(a_1, b_1, c_1)
+```
+###添加拟合线数据
+```{r}
+age_fit <- seq(1,45,length.out=1000)
+AGC_fit1 <- (265.3737 * 0.456) * (1 - exp(-0.009241 * age_fit))^0.149511
+fit1 <- data_frame(age_fit,AGC_fit1) |>   
+  mutate(site = "amazon")
+AGC_fit2 <- (265.7323 * 0.456) * (1 - exp(-0.05268 * age_fit))^0.68517
+fit2 <- data_frame(age_fit,AGC_fit2) |> 
+  mutate(site = "borneo")
+AGC_fit3 <- (255.7404 * 0.456) * (1 - exp(-0.0353 * age_fit))^0.2116
+fit3 <- data_frame(age_fit,AGC_fit3) |> 
+  mutate(site = "congo")
+```
+###作图
+```{r}
+p1 <- ggplot(m, aes(age, weight_median * 0.456,color=site))+
+  theme_classic()+
+  geom_point(data = a_1,aes(x=age,y=weighted_median*0.456))+
+  geom_line(data = fit1,aes(age_fit,AGC_fit1))+
+  geom_point(data = b_1,aes(x=age,y=weighted_median*0.456))+
+  geom_line(data = fit2,aes(age_fit,AGC_fit2))+
+  geom_point(data = c_1,aes(x=age,y=weighted_median*0.456))+
+  geom_line(data = fit3,aes(age_fit,AGC_fit3))+
+  labs(x="Years since last disturbance event",
+       y=~"AGC(Mg"~"C"~"ha"^"-1"*")",
+       title="Recovering secondary forest")+
+  theme(plot.title = element_text(hjust = 0.5,size = 11),
+        legend.position = c(0.9,0.05),
+        legend.justification = c(1,0),
+        legend.title = element_blank())+
+  scale_x_continuous(limits=c(0,50),breaks = c(0,10,20,30,40,50),
+                     labels = c("0","10","20","30","40","OG"))+
+  scale_y_continuous(limits = c(0,140),
+                     breaks = c(0,20,40,60,80,100,120,140))+
+  scale_color_manual(values = c("#18BECF","#BCBD23","#7F7F7F"))
+
+p1
+```
+
+##图1b
+###读取csv和RDS数据，并合并数据
+```{r}
+d <- read_csv("overall_stats_amazon_basin_secondary_for.csv")
+e <- read_csv("overall_stats_borneo_secondary_for.csv")
+f <- read_csv("overall_stats_congo_basin_secondary_for.csv")
+readRDS("regrowthModel_amazon_basin_sec.rds")
+readRDS("regrowthModel_borneo_sec.rds")
+readRDS("regrowthModel_congo_basin_sec.rds")
+d_1 <-  d |>  
+  mutate(site = "amazon")
+e_1 <-  e |> 
+  mutate(site = "borneo")
+f_1 <-  f |>  
+  mutate(site = "congo")
+n <- rbind(d_1, e_1, f_1)
+```
+###添加拟合线数据
+```{r}
+age_fit0 <- seq(0,45,length.out=1000)
+AGC_fit4 <- (265.3737 * 0.456) * (1 - exp(-0.01297 * age_fit0))^0.67130
+fit4 <- data_frame(age_fit0,AGC_fit4)|>   
+  mutate(site = "amazon")
+AGC_fit5 <- (265.7323 * 0.456) * (1 - exp(-0.02641 * age_fit0))^0.95896
+fit5 <- data_frame(age_fit0,AGC_fit5)|> 
+  mutate(site = "borneo")
+AGC_fit6 <- (255.7404 * 0.456) * (1 - exp(-0.02232 * age_fit0))^0.76758
+fit6 <- data_frame(age_fit0,AGC_fit6)|> 
+  mutate(site = "congo")
+```
+###作图
+```{r}
+p2 <- ggplot(n,aes(age, weight_median * 0.456,color=site))+
+  theme_classic()+
+  geom_point(data = d_1,aes(x=age,y=(weighted_median-90)*0.456))+
+  geom_line(data = fit4,aes(age_fit0,AGC_fit4))+
+  geom_point(data = e_1,aes(x=age,y=(weighted_median-29)*0.456))+
+  geom_line(data = fit5,aes(age_fit0,AGC_fit5))+
+  geom_point(data = f_1,aes(x=age,y=(weighted_median-122)*0.456))+
+  geom_line(data = fit6,aes(age_fit0,AGC_fit6))+
+  theme(plot.title = element_text(hjust = 0.5,size = 11),
+        legend.position = "none", 
+        legend.title = element_blank())+
+  labs(x="Years since last disturbance event",
+       y=~NULL,
+       title="Recovering secondary forest")+
+  scale_x_continuous(limits=c(0,50),breaks = c(0,10,20,30,40,50),
+                     labels = c("0","10","20","30","40","OG"))+
+  scale_y_continuous(limits = c(0,140),
+                     breaks = c(0,20,40,60,80,100,120,140),labels=NULL)+
+  scale_color_manual(values = c("#18BECF","#BCBD23","#7F7F7F"))
+
+p2
+```
+
+##合并图
+```{r}
+p <- p1+p2
+p
+p+plot_annotation(tag_levels ="a")
+
+```
+
